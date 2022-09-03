@@ -1,0 +1,283 @@
+<html>
+<head>
+    <title>Manage Service Request</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
+    <script src="https://unpkg.com/sweetalert@2.1.0/dist/sweetalert.min.js"></script>
+
+    <style>
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 60px;
+          height: 34px;
+        }
+        
+        .switch input { 
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          -webkit-transition: .4s;
+          transition: .4s;
+        }
+        
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 26px;
+          width: 26px;
+          left: 4px;
+          bottom: 4px;
+          background-color: white;
+          -webkit-transition: .4s;
+          transition: .4s;
+        }
+        
+        input:checked + .slider {
+          background-color: #2196F3;
+        }
+        
+        input:focus + .slider {
+          box-shadow: 0 0 1px #2196F3;
+        }
+        
+        input:checked + .slider:before {
+          -webkit-transform: translateX(26px);
+          -ms-transform: translateX(26px);
+          transform: translateX(26px);
+        }
+        
+        /* Rounded sliders */
+        .slider.round {
+          border-radius: 34px;
+        }
+        
+        .slider.round:before {
+          border-radius: 50%;
+        }
+
+        .dataTables_scrollBody{
+        position: relative;
+        overflow: auto;
+        margin-top:-3%;
+        height:unset;
+        }
+        </style>
+    <script>
+  function getCookie(cname) {
+  let name = cname + "=";
+  let decodedCookie = decodeURIComponent(document.cookie);
+  let ca = decodedCookie.split(';');
+  for(let i = 0; i <ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
+function eraseCookie(name) {   
+    document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    return true;
+}
+      
+  var Display;
+  var baseURL="http://ec2-user@ec2-54-175-112-201.compute-1.amazonaws.com/";
+  $(document).ready(function () {
+    if(getCookie('user_type')!="Admin")
+    {
+        window.location.href = "index.html";
+    }
+      $('#RequestTable').DataTable();
+      Display = function () {
+          oTable = $('#RequestTable').DataTable({
+              dom: 'Bfrtip',
+              "bPaginate": false,
+              buttons: [
+                  'excel', 'pdf', 'print'
+              ],
+              "processing": false,
+              "serverSide": false,
+              "bSort": false,
+              "searching": true,
+              "sAjaxSource": baseURL+"admin/service-requests",
+              "pageLength": 10,
+              "bDestroy": true,
+              "bLengthChange": true,
+              "scrollX": true,
+              "scrollY": ($(window).height() - 200),
+              "pagingType": "full_numbers",
+              "sEmptyTable": "Loading data from server",
+              "fnServerData": function (sSource, aoData, fnCallback) {
+                  $.ajax({
+                      "dataType": 'json',
+                      "type": "GET",
+                      "url": sSource,
+                      "data": aoData,
+                      "success": fnCallback
+                  });
+              },
+              "columns": [
+                                {
+                                    "visible": false,
+                                    "render": function (data, type, row, meta) {
+                                        return (row.request_id)
+                                    }
+                                },
+                                {
+                                     "render": function (data, type, row, meta) {
+                                        return (row.user_firstname)
+                                    }
+                                },
+                                {
+                                    "render": function (data, type, row, meta) {
+                                        return (row.request_title)
+                                    }
+                                },
+                                 {
+                                     "render": function (data, type, row, meta) {
+                                         return (row.request_description)
+                                     }
+                                 },
+                                  {
+                                      "render": function (data, type, row, meta) {
+                                          return (row.request_category)
+                                      }
+                                  },
+                                  {
+                                      "render": function (data, type, row, meta) {
+                                          return (row.user_uno)
+                                      }
+                                  },
+                                   {
+                                       "render": function (data, type, row, meta) {
+                                        return "<img style='width: 250px;height: 150px;' src='"+ row.request_image + "' >"
+                                       }
+                                   },
+                                {
+                                    "render": function (data, type, row, meta) {
+                                        if(row.request_status=="1")
+                                        {
+                                            return '<label class="switch"><input type="checkbox" id="requestStatus_' + row.request_id + '" class="chkstatus" checked><span class="slider round"></span></label>';
+                                        }
+                                        else
+                                        {
+                                            return '<label class="switch"><input type="checkbox" id="requestStatus_' + row.request_id + '" class="chkstatus"><span class="slider round"></span></label>';
+                                        }                                                              
+                                     }
+                                }
+              ], "fnInitComplete": function (oSetting, json) {
+              }
+          });
+      }
+      Display();
+
+        $(document).on("click", ".chkstatus", function(){
+            var status;
+            if (this.checked == false) {
+               status="0";
+            }
+            else
+            {
+                status="1";
+            }
+            var ID = this.id.split("_")[1];
+            var data = { "request_id":ID,"request_status": status };
+            $.ajax({
+                            url: baseURL+"requests/update-status",
+                            type: "POST",
+                            contentType: "application/json; charset=utf-8",
+                            data: JSON.stringify(data),
+                            dataType: "json",
+                            success: function (response) {
+                                if (response == "1") {
+                                    swal("Request Updated Successfully!", "", "success", {
+                                        button: "Close",
+                                    });
+                                    Display();
+                                }
+                                else {
+                                    swal("Request Not Updated!", "", "error", {
+                                        button: "Close",
+                                    });
+                                }
+                            }
+                  });
+        });
+  });
+    </script>
+</head>
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand">Home</a>
+            </div>
+            <div class="collapse navbar-collapse" id="myNavbar">
+                <ul class="nav navbar-nav">
+                    <li class="active"><a href="ManageServiceRequest.html">Service Request</a></li>
+                    <li><a href="ManageUser.html">Users</a></li>
+                    <li><a href="index.html" onclick="eraseCookie('user_type')">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <br />
+        <center>
+            <h1>Manage Service Request</h1>
+            <br />
+        </center>
+        <div class="row">
+            <div class="col-md-10" style="margin-left:8%">
+                <table id="RequestTable" class="table table-striped table-bordered table-responsive" style="width:100%">
+                    <thead>
+                        <tr>
+                            <td>ID</td>
+                            <td>Name</td>
+                            <td>Title</td>
+                            <td>Description</td>
+                            <td>Category</td>
+                            <td>Unit</td>
+                            <td>Image</td>
+                            <td>Action</td>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

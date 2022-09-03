@@ -1,0 +1,528 @@
+<html>
+<head>
+    <title>Add Service</title>
+
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
+    <script src="https://unpkg.com/sweetalert@2.1.0/dist/sweetalert.min.js"></script>
+
+    <style>
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 60px;
+          height: 34px;
+        }
+        
+        .switch input { 
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          -webkit-transition: .4s;
+          transition: .4s;
+        }
+        
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 26px;
+          width: 26px;
+          left: 4px;
+          bottom: 4px;
+          background-color: white;
+          -webkit-transition: .4s;
+          transition: .4s;
+        }
+        
+        input:checked + .slider {
+          background-color: #2196F3;
+        }
+        
+        input:focus + .slider {
+          box-shadow: 0 0 1px #2196F3;
+        }
+        
+        input:checked + .slider:before {
+          -webkit-transform: translateX(26px);
+          -ms-transform: translateX(26px);
+          transform: translateX(26px);
+        }
+        
+        /* Rounded sliders */
+        .slider.round {
+          border-radius: 34px;
+        }
+        
+        .slider.round:before {
+          border-radius: 50%;
+        }
+
+        .dataTables_scrollBody{
+        position: relative;
+        overflow: auto;
+        margin-top:-3%;
+        height:unset;
+        }
+        </style>
+
+    <script>
+
+    function hideEmptyImage()
+    {
+        $('img').each(function () { console.log('here');
+            if($(this).attr('src') == '' || $(this).attr('src').indexOf('undefined')!=-1){
+                $(this).hide()
+            }
+        });
+    }
+        
+  function check(e,obj)
+   {
+		  if(obj.id=="uno")
+		  {
+		       	var regex = /^[0-9]+/;
+				if(!regex.test(e.key))
+				{
+				             var str=obj.value;
+				             var withNoDigits = str.replace(/[^0-9]/g, '');	         
+							 obj.value=withNoDigits;
+				}
+		  }
+		  else if (obj.id == "email") {
+		      var re = /^[-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/i;
+		      if (!re.test(obj.value)) {
+		          alert("Enter Correct Email");
+		          obj.value = "";
+		      }
+		  }
+		  else
+		  {
+		      var regex = /^[a-z]+/;
+		      if (!regex.test(e.key)) {
+		          var str = obj.value;
+		          var withNoDigits = str.replace(/[^a-z]/g, '');
+		          obj.value = withNoDigits;
+		      }
+		   }
+   }
+
+function getCookie(cname) {
+  let name = cname + "=";
+  let decodedCookie = decodeURIComponent(document.cookie);
+  let ca = decodedCookie.split(';');
+  for(let i = 0; i <ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
+function eraseCookie(name) {   
+    document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    return true;
+}
+
+  var Display,clear,UserID;
+  var baseURL="http://ec2-user@ec2-54-175-112-201.compute-1.amazonaws.com/";
+  $(document).ready(function () {
+
+    if(getCookie('user_type')!="Resident" || getCookie('user_id')==null)
+    {
+        window.location.href = "index.html";
+    }
+    else
+    {
+        UserID=getCookie('user_id');
+    }
+
+      $('#RequestTable').DataTable();
+      var data = { "ID": UserID };
+      Display = function () {
+          oTable = $('#RequestTable').DataTable({
+              dom: 'Bfrtip',
+              "bPaginate": false,
+              buttons: [
+                  'excel', 'pdf', 'print'
+              ],
+              "processing": false,
+              "serverSide": false,
+              "bSort": false,
+              "searching": true,
+              "sAjaxSource": baseURL+"service-requests",
+              "pageLength": 10,
+              "bDestroy": true,
+              "bLengthChange": true,
+              "scrollX": true,
+              "scrollY": ($(window).height() - 200),
+              "pagingType": "full_numbers",
+              "sEmptyTable": "Loading data from server",
+              "fnServerData": function (sSource, aoData, fnCallback) {
+                  $.ajax({
+                            "contentType": "application/json; charset=utf-8",
+                            "dataType": 'json',
+                            "type": "POST",
+                            "url": sSource,
+                            "data": JSON.stringify(data),
+                            "success": fnCallback
+                        });
+              },
+              "columns": [
+                                {
+                                    "visible": false,
+                                    "render": function (data, type, row, meta) {
+                                        return (row.request_id)
+                                    }
+                                },
+                                {
+                                    "render": function (data, type, row, meta) {
+                                        return (row.request_title)
+                                    }
+                                },
+                                 {
+                                     "render": function (data, type, row, meta) {
+                                         return (row.request_description)
+                                     }
+                                 },
+                                  {
+                                      "render": function (data, type, row, meta) {
+                                          return (row.request_category)
+                                      }
+                                  },
+                                   {
+                                       "render": function (data, type, row, meta) {
+                                        return "<img alt= 'No image' src='"+ row.request_image + "' style='width: 250px;height: 150px;'>"
+                                       }
+                                   },
+                                   {
+                                      "render": function (data, type, row, meta) {
+                                            if(row.request_status=="1")
+                                            {
+                                                return '<label class="switch"><input type="checkbox" disabled checked><span class="slider round"></span></label>';
+                                            }
+                                            else
+                                            {
+                                                return '<label class="switch"><input type="checkbox" disabled><span class="slider round"></span></label>';
+                                            } 
+                                      }
+                                  },
+                                {
+                                    "render": function (data, type, row, meta) {
+                                        return '<button class="btn btn-primary fa fa-check-square"  title="Edit" onclick="editdata(\'' + row.request_id + '\',\'' + row.request_title + '\',\'' + row.request_description + '\',\''+row.request_category+'\',\''+row.request_image+'\')"></button>' +
+                                    '<button class="btn btn-danger glyphicon glyphicon-trash" title="Delete"  onclick="deletedata(\'' + row.request_id + '\')" style="margin-left: 10px;"></button>';
+                                    }
+                                }
+              ], "fnInitComplete": function (oSetting, json) {
+                hideEmptyImage();
+              }
+          });
+      }
+      Display();
+      hideEmptyImage();
+      $("#btninup").click(function () {
+          if (requiredcheck()) {
+              swal("Please Enter Data", "", "error", {
+                  button: "Close",
+              });
+          }
+          else {
+              var fdata = new FormData();
+              var fileUpload = $("#image").get(0);
+              var files = fileUpload.files;
+              fdata.append("request_id", $("#hdnID").val());
+              fdata.append("request_title", $("#title").val());
+              fdata.append("request_description", $("#description").val());
+              fdata.append("request_category", $("#cname").val());
+              fdata.append('request_image', files[0]);
+              fdata.append('user_id',UserID);
+              fdata.append('request_status',"0");
+
+              if ($("#btninup").val() == "Insert")
+              {
+                $.ajax({
+                                  url: baseURL+"upsert-service-request",
+                                  type: "POST",
+                                  contentType: false, // Not to set any content header
+                                  processData: false, // Not to process data
+                                  data: fdata,
+                                  success: function (result) {
+                                      if (result == "1") {
+                                          swal("Request Inserted Successfully!", "", "success", {
+                                              button: "Close",
+                                          });
+                                          $("#btninup").val("Insert");
+                                          Display();
+                                          clear();
+                                      }
+                                      else {
+                                          swal("Request Not Inserted", "", "error", {
+                                              button: "Close",
+                                          });
+                                      }
+                                  },
+                                  error: function (err) {
+                                      alert(err.statusText);
+                                  }
+                        });
+              }
+              else
+              {              
+                  $.ajax({
+                                    url: baseURL+"upsert-service-request",
+                                    type: "POST",
+                                    contentType: false, // Not to set any content header
+                                    processData: false, // Not to process data
+                                    data: fdata,
+                                    success: function (result) {
+                                    if (result == "1") {
+                                        swal("Successfully Request Updated!", "", "success", {
+                                                    button: "Close",
+                                            });
+                                        $("#btninup").val("Insert");
+                                        Display();
+                                        clear();
+                                     }
+                                    else {
+                                        swal("Request Not Updated", "", "error", {
+                                                    button: "Close",
+                                            });
+                                    }
+                                    },
+                                    error: function (err) {
+                                        alert(err.statusText);
+                                    }
+                        });
+              }
+          }
+      });
+
+
+    $("#image").change(function (e) {
+                var fileName = e.target.files[0].name;
+                $("#imagedis").css("display", "block");
+                $("#imagedis").attr("src",URL.createObjectURL(e.target.files[0]));
+            });
+
+      
+      clear=function()
+      {
+        $("#cname").val('');
+        $("#title").val('');
+        $("#description").val('');
+        $("#image").val('');
+        $("#imagedis").css("display", "none");
+        $("#btninup").val('Insert');
+      }
+      function requiredcheck()
+      {
+          var isValid = false;
+          $('input[type="text"]').each(function () {
+              if ($(this).val() == '') {
+                  isValid = true; 
+              }
+          });
+          return isValid;
+      }
+  });
+        function editdata(id,title,description,category,image)
+        {
+            $("#hdnID").val(id);
+            $("#cname").val(category);
+            $("#title").val(title);
+            $("#description").val(description);
+            $("#imagedis").attr("src",image);
+            $("#imagedis").css("display", "block");
+            $("#btninup").val("Update");
+        }
+        function deletedata(ID) {
+            bootbox.confirm({
+                title: "Please Confirm",
+                message: "Are you sure to delete this record.",
+                buttons: {
+                    cancel: {
+                        label: '<i class="fa fa-times"></i> Cancel'
+                    },
+                    confirm: {
+                        label: '<i class="fa fa-check"></i> Confirm'
+                    }
+                },
+                callback: function (result) {
+                    if (result == true) {
+                        var data = { "ID": ID };
+                        $.ajax({
+                            url: baseURL+"delete-request",
+                            type: "DELETE",
+                            contentType: "application/json; charset=utf-8",
+                            data: JSON.stringify(data),
+                            dataType: "json",
+                            success: function (response) {
+                                if (response == "1") {
+                                    swal("Successfully Request Deleted!", "", "success", {
+                                        button: "Close",
+                                    });
+                                    Display();
+                                    clear();
+                                }
+                                else {
+                                    swal("Request Not Deleted!", "", "error", {
+                                        button: "Close",
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+
+    <nav class="navbar navbar-inverse">
+
+        <div class="container-fluid">
+
+            <div class="navbar-header">
+
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+
+
+                <a class="navbar-brand">Home</a>
+
+
+            </div>
+
+
+            <div class="collapse navbar-collapse" id="myNavbar">
+                <ul class="nav navbar-nav">
+                    <li class="active"><a href="AddServiceRequest.html">Add Request</a></li>
+                    <li><a href="index.html" onclick="eraseCookie('user_type')">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <br />
+
+        <center>
+
+            <h1>Add Service Request</h1>
+            <br />
+
+        </center>
+
+            <div class="row">
+
+                <div class="col-md-1">
+
+                </div>
+
+                <div class="col-md-5">
+
+                    <div class="form-group">
+                        <input type="text" id="cname" placeholder="Category" class="form-control" maxlength="30" required="">
+                    </div>
+
+                </div>
+
+                <div class="col-md-5">
+                    <div class="form-group">
+                        <input type="text" id="title" placeholder="Title" class="form-control" maxlength="30" required="">
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="row">
+
+                <div class="col-md-1">
+
+                </div>
+
+                <div class="col-md-5">
+
+                    <div class="form-group">
+                        <textarea id="description" name="description" class="form-control" rows="4" cols="50"></textarea>
+                    </div>
+
+                </div>
+
+                <div class="col-md-5">
+                    <div class="form-group">
+                        <input type="file" id="image" class="form-control" accept="image/png, image/jpeg">
+                    </div>
+
+                    <div class="col-md-3">
+                        <img src="" alt="" style="width: 250px;height: 150px;" id="imagedis" style="display: none;">
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-1">
+                </div>
+                <div class="col-md-1">
+                    <input type="hidden" id="hdnID" value="0" />
+                    <input type="submit" id="btninup" class="btn btn-primary" value="Insert" />
+                </div>
+            </div>
+        <br />
+        <div class="row">
+
+            <div class="col-md-10" style="margin-left:8%">
+                <table id="RequestTable" class="table table-striped table-bordered table-responsive" style="width:100%">
+                    <thead>
+                        <tr>
+                            <td>ID</td>
+                            <td>Title</td>
+                            <td>Description</td>
+                            <td>Category</td>                         
+                            <td>Image</td>
+                            <td>Status</td>
+                            <td>Action</td>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+
+    </div>
+
+</body>
+</html>

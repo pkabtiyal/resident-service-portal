@@ -1,0 +1,148 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+	<script>
+		addEventListener("load", function () {
+			setTimeout(hideURLbar, 0);
+		}, false);
+
+		function hideURLbar() {
+			window.scrollTo(0, 1);
+		}
+	</script>
+	<link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
+
+    <style>
+        .signin-form {
+            padding: 0;
+        }
+
+        textarea {
+            width: 100%;
+            font-size: 14px;
+            margin-bottom: 1.5em;
+            padding: 14px;
+            outline: none;
+            letter-spacing: 1px;
+            color: #212121;
+            border: none;
+            border-bottom: 1px solid #d8d7d7;
+            box-sizing: border-box;
+            box-shadow: 2px 2px 5px 0px rgba(0, 0, 0, 0.31);
+        }
+
+        .pricing-chart {
+            margin-bottom: 20%;
+        }
+
+
+        body {
+            background-position: right;
+        }
+        
+        input[type="radio"] {
+    width: 9%;
+    height: 21px;
+       }
+          
+       .empcodehide{
+         display:none;
+       }
+          
+          
+          
+    </style>
+	
+</head>
+
+<body>
+	<h1>Resident Portal</h1>
+
+	<section class="pricing-columns pricing-section">
+		<div class="pricing-style-w3ls">
+            <div id="monthly" class="wrapper-full">
+                <div class="pricing-chart">
+                    <div class="plan popular">
+                        <h3 class="pop-plan">Login</h3>
+                        <div class="signin-form profile">
+                            <input type="text" id="txtloginemail" placeholder="Email"  style="margin-top: 17px;">
+                            <input type="password" id="txtloginpass" placeholder="Password" >
+                        </div>
+                        <a id="btnLogin" class="button sign-up popup-with-zoom-anim">Sign In</a> 
+                     </div>
+                </div>
+            </div>
+		</div>
+	</section>
+
+	<script src="js/jquery-2.2.3.min.js"></script>
+	
+	<script src="https://unpkg.com/sweetalert@2.1.0/dist/sweetalert.min.js"></script>
+	
+	    <script>
+
+	function setCookie(name,value,days) {
+		var expires = "";
+		if (days) {
+			var date = new Date();
+			date.setTime(date.getTime() + (days*24*60*60*1000));
+			expires = "; expires=" + date.toUTCString();
+		}
+		document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+	}
+    $( document ).ready(function() {
+
+		var baseURL="http://ec2-user@ec2-54-175-112-201.compute-1.amazonaws.com/";
+    	    	
+    	 $("#btnLogin").click(function () {
+    		 	 
+    			var userEmail = $("#txtloginemail").val();
+    			var userPassword =$("#txtloginpass").val(); 
+
+				$.ajax({
+					type: 'POST',
+					contentType: 'application/json',
+					url: baseURL+"user/authentication",
+					dataType : 'json',
+					data : JSON.stringify({
+    					'user_email': userEmail,
+    					'user_password': userPassword
+    				}),
+					success : function(result) {
+    					
+    					if(result.success==true)
+    					{
+							setCookie('user_type',result.user_type,1);
+							if(result.user_type=="Resident")
+							{								
+								setCookie('user_id',result.user_id,1);
+								window.location.href = "AddServiceRequest.html";
+							}
+							else
+							{
+								window.location.href = "ManageServiceRequest.html";						
+							}
+    					}
+    					else
+    					{
+							swal(result.data, "", "error", {
+		                            button: "Close",
+		                        });							   						
+	   						clear();
+    					}  				
+    				},
+					error : function(result){
+					console.log(result);
+					}
+				});
+    	 }); 
+    	var clear=function(){
+    			 $("#txtloginemail").val("");
+    			 $("#txtloginpass").val("");
+    	}
+    });
+    </script>
+	
+</body>
+</html>
